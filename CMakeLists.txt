@@ -1,21 +1,30 @@
 ﻿cmake_minimum_required(VERSION 3.10)
 project(OpenGLProject)
 
+set(CMAKE_CXX_STANDARD 17)          # Use C++17
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # Enforce C++17
+
 # Define paths to dependencies
 set(GLEW_ROOT ${CMAKE_SOURCE_DIR}/dependencies/glew)
 set(GLFW_ROOT ${CMAKE_SOURCE_DIR}/dependencies/glfw)
+set(STB_IMAGE_ROOT ${CMAKE_SOURCE_DIR}/dependencies/stb_image)
+
 
 # Add include directories for your dependencies
 include_directories(
     ${GLEW_ROOT}/include
     ${GLFW_ROOT}/include
+    ${STB_IMAGE_ROOT}
 )
 
 # Add the executable
 add_executable(${PROJECT_NAME} src/main.cpp)
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src")
+
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
+
 
 
 # Link libraries to your project

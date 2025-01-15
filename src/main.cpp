@@ -1,8 +1,13 @@
 #include <GL/glew.h>        // Include GLEW first, before GLFW
 #include <GLFW/glfw3.h>     // Then include GLFW
-#include <iostream>
+#include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <iostream>
 #include <string>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 
 
@@ -24,22 +29,39 @@ static void processInput(GLFWwindow* window)
         glfwSetWindowShouldClose(window, true);
 }
 
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"layout (location = 1) in vec3 vertex_color;\n"
-"smooth out vec4 theColor;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"   theColor = vec4(vertex_color, 1.0f);\n"
-"}\0";
-const char* fragmentShaderSource = "#version 330 core\n"
-"smooth in vec4 theColor;\n"
-"out vec4 outColor;\n"
-"void main()\n"
-"{\n"
-"   outColor = theColor;\n"
-"}\0";
+
+
+
+static const char* loadShaderAsString(const std::string& filename) {
+    std::ifstream myFile(filename);
+
+    if (!myFile.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return "";
+    }
+
+    std::ostringstream result;
+    std::string line;
+
+    while (std::getline(myFile, line)) {
+        result << line << "\n"; // Append line with a newline
+    }
+
+    myFile.close();
+
+    // Allocate memory for the C-string
+    std::string resultStr = result.str();
+    char* cStr = new char[resultStr.size() + 1]; // +1 for null terminator
+    std::copy(resultStr.begin(), resultStr.end(), cStr);
+    cStr[resultStr.size()] = '\0'; // Null-terminate the C-string
+
+    return cStr;
+}
+
+
+
+
+
 
 
 int main()
@@ -90,6 +112,19 @@ int main()
     
 
 
+    // new shaders must be in out/build/x64-debug/shaders
+
+
+
+    const char* vertexShaderSource = loadShaderAsString("resources/shaders/vertex.glsl");
+    const char* fragmentShaderSource = loadShaderAsString("resources/shaders/fragment.glsl");
+
+
+
+
+    
+
+
     // build and compile our shader program
     // ------------------------------------
     // vertex shader
@@ -133,9 +168,9 @@ int main()
     // ------------------------------------------------------------------
     float vertices[] = {
         // Positions         // Colors
-        -0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // Vertex 1: red
-        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  // Vertex 2: green
-        0.0f,  0.5f, 0.0f,   0.0f, 0.0f, 1.0f   // Vertex 3: blue
+       -0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   -0.5f, -0.5f,  // Vertex 1: red
+        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,    0.5f, -0.5f,  // Vertex 2: green
+       -0.5f,  0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   -0.5f,  0.5f  // Vertex 3: blue
     };
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
@@ -145,11 +180,39 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("resources/textures/container.jpg", &width, &height, &nrChannels, 0);
+
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -157,7 +220,6 @@ int main()
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
-    glBindVertexArray(1);
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // render loop
