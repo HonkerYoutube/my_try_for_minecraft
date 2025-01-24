@@ -39,6 +39,11 @@ float lastY = 600.0 / 2.0;
 float fov = 45.0f;
 
 
+bool isSpeedModeActive = false;
+double lastKeyPressTime = 0.0;
+const double cooldownDuration = 0.25; // cooldown in seconds
+const float speedModeMultiplier = 4.0f;
+
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -445,7 +450,13 @@ static void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    float cameraSpeed = static_cast<float>(2.5 * deltaTime);
+    double currentTime = glfwGetTime();
+    float cameraSpeed;
+
+    if (!isSpeedModeActive)
+        cameraSpeed = static_cast<float>(2.5 * deltaTime);
+    else
+        cameraSpeed = static_cast<float>(2.5 * deltaTime) * speedModeMultiplier;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         cameraPos += cameraSpeed * cameraFront;
@@ -455,6 +466,17 @@ static void processInput(GLFWwindow* window)
         cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        cameraPos += cameraSpeed * glm::vec3(0, 1, 0);
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS && currentTime - lastKeyPressTime >= cooldownDuration)
+    {
+        isSpeedModeActive = !isSpeedModeActive;
+        lastKeyPressTime = currentTime;
+        std::cout << "speed: " << isSpeedModeActive << std::endl;
+    }
+
 
 }
 
