@@ -19,8 +19,17 @@ include_directories(
     ${GLM_ROOT}
 )
 
+
+
+#! for updated resource folder u must press ctrl-s to reload this file only then it will be copied
+
 # Add the executable
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/voxel_manager.cpp)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+message("Source Dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+message("Binary Dir: ${CMAKE_CURRENT_BINARY_DIR}")
+
 
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)

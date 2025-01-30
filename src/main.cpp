@@ -1,6 +1,7 @@
 #include <GL/glew.h>        // Include GLEW first, before GLFW
 #include <GLFW/glfw3.h>     // Then include GLFW
 #include <filesystem>
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -10,6 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "voxel_manager.h"
 
 
 
@@ -62,42 +64,11 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 static void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void setMat4(const GLuint& ID, const std::string& name, const glm::mat4& mat);
+static const char* loadShaderAsString(const std::string& filename);
 
 
 
-
-void setMat4(const GLuint& ID, const std::string& name, const glm::mat4& mat)
-{
-    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-}
-
-
-
-static const char* loadShaderAsString(const std::string& filename) {
-    std::ifstream myFile(filename);
-
-    if (!myFile.is_open()) {
-        std::cerr << "Failed to open file: " << filename << std::endl;
-        return "";
-    }
-
-    std::ostringstream result;
-    std::string line;
-
-    while (std::getline(myFile, line)) {
-        result << line << "\n"; // Append line with a newline
-    }
-
-    myFile.close();
-
-    // Allocate memory for the C-string
-    std::string resultStr = result.str();
-    char* cStr = new char[resultStr.size() + 1]; // +1 for null terminator
-    std::copy(resultStr.begin(), resultStr.end(), cStr);
-    cStr[resultStr.size()] = '\0'; // Null-terminate the C-string
-
-    return cStr;
-}
 
 
 
@@ -214,6 +185,7 @@ int main()
     glDeleteShader(fragmentShader);
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
+    // only 1 cube
     float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -262,18 +234,35 @@ int main()
         1, 2, 3    // second triangle
     };
 
-    glm::vec3 cubePositions[] = {
-        glm::vec3(0.0f,  0.0f, 0.0f),
-        glm::vec3(1.0f,  0.0f, 0.0f),
-        glm::vec3(2.0f,  0.0f, 0.0f),
-        glm::vec3(3.0f,  0.0f, 0.0f),
-        glm::vec3(4.0f,  0.0f, 0.0f),
-        glm::vec3(5.0f,  0.0f, 0.0f),
-        glm::vec3(6.0f,  0.0f, 0.0f),
-        glm::vec3(7.0f,  0.0f, 0.0f),
-        glm::vec3(8.0f,  0.0f, 0.0f),
-        glm::vec3(9.0f,  0.0f, 0.0f)
-    };
+    /*glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(2.0f, 0.0f, 0.0f),
+        glm::vec3(3.0f, 0.0f, 0.0f),
+        glm::vec3(4.0f, 0.0f, 0.0f),
+        glm::vec3(5.0f, 0.0f, 0.0f),
+        glm::vec3(6.0f, 0.0f, 0.0f),
+        glm::vec3(7.0f, 0.0f, 0.0f),
+        glm::vec3(8.0f, 0.0f, 0.0f),
+        glm::vec3(9.0f, 0.0f, 0.0f)
+    };*/
+
+
+
+    std::vector<glm::vec3> cubePositions;
+
+
+    voxel_manager::chunk chunk;
+
+    unsigned const int chunkSize = voxel_manager::chunkSize;
+
+    for (unsigned int i = 0; i < chunk.voxels.size(); i++) {
+        cubePositions.push_back(glm::vec3(i% chunkSize, (i / chunkSize) % chunkSize, (i / (chunkSize * chunkSize)) % chunkSize));
+    }
+
+
+
+
 
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -332,8 +321,6 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
 
-    
-    
 
     // render loop
     // -----------
@@ -382,12 +369,12 @@ int main()
 
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        for (unsigned int i = 0; i < 10; i++)
+        for (unsigned int i = 0; i < chunk.voxels.size(); i++)
         {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            //float angle = 20.0f * i;
-            //model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            /*float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));*/
 
             // retrieve the matrix uniform locations
             unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
@@ -434,6 +421,40 @@ int main()
 
 
 
+
+
+void setMat4(const GLuint& ID, const std::string& name, const glm::mat4& mat)
+{
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+
+
+static const char* loadShaderAsString(const std::string& filename) {
+    std::ifstream myFile(filename);
+
+    if (!myFile.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return "";
+    }
+
+    std::ostringstream result;
+    std::string line;
+
+    while (std::getline(myFile, line)) {
+        result << line << "\n"; // Append line with a newline
+    }
+
+    myFile.close();
+
+    // Allocate memory for the C-string
+    std::string resultStr = result.str();
+    char* cStr = new char[resultStr.size() + 1]; // +1 for null terminator
+    std::copy(resultStr.begin(), resultStr.end(), cStr);
+    cStr[resultStr.size()] = '\0'; // Null-terminate the C-string
+
+    return cStr;
+}
 
 
 
