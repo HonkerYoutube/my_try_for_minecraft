@@ -78,7 +78,7 @@ static const char* loadShaderAsString(const std::string& filename);
 
 int main()
 {
-    #pragma region initialization
+#pragma region initialization
 
     // Initialize GLFW
     if (!glfwInit())
@@ -127,8 +127,8 @@ int main()
 
 
 
-    #pragma endregion
-    
+#pragma endregion
+
 
 
     // new shaders must be in out/build/x64-debug/shaders
@@ -141,7 +141,7 @@ int main()
 
 
 
-    
+
 
 
     // build and compile our shader program
@@ -189,10 +189,10 @@ int main()
     float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // doubles like 2
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // doubles like 2
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  // double like 2
 
     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
      0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
@@ -228,7 +228,7 @@ int main()
      0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    }; 
+    };
     unsigned int indices[] = {
         0, 1, 3,   // first triangle
         1, 2, 3    // second triangle
@@ -257,7 +257,7 @@ int main()
     unsigned const int chunkSize = voxel_manager::chunkSize;
 
     for (unsigned int i = 0; i < chunk.voxels.size(); i++) {
-        cubePositions.push_back(glm::vec3(i% chunkSize, (i / chunkSize) % chunkSize, (i / (chunkSize * chunkSize)) % chunkSize));
+        cubePositions.push_back(glm::vec3(i % chunkSize, (i / chunkSize) % chunkSize, (i / (chunkSize * chunkSize)) % chunkSize));
     }
 
 
@@ -278,7 +278,7 @@ int main()
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    
+
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
@@ -331,7 +331,7 @@ int main()
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        
+
         // input
         // -----
         processInput(window);
@@ -345,7 +345,7 @@ int main()
 
 
         glUseProgram(shaderProgram);
-        
+
 
 
         // camera/view transformation
@@ -390,10 +390,10 @@ int main()
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
 
-        
 
 
-        
+
+
 
         glfwSwapBuffers(window);
     }
@@ -552,5 +552,4 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (fov > 45.0f)
         fov = 45.0f;
 }
-
 
