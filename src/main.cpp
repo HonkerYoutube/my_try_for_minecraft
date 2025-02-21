@@ -76,9 +76,9 @@ static const char* loadShaderAsString(const std::string& filename);
 
 
 
-int main()
-{
-#pragma region initialization
+int main() {
+
+    #pragma region initialization
 
     // Initialize GLFW
     if (!glfwInit())
@@ -127,7 +127,7 @@ int main()
 
 
 
-#pragma endregion
+    #pragma endregion
 
 
 
@@ -252,12 +252,23 @@ int main()
     std::vector<glm::vec3> cubePositions;
 
 
-    voxel_manager::chunk chunk;
+    voxel_manager::chunk* chunk = new voxel_manager::chunk;
 
     unsigned const int chunkSize = voxel_manager::chunkSize;
 
-    for (unsigned int i = 0; i < chunk.voxels.size(); i++) {
+    /*for (unsigned int i = 0; i < chunkSize * chunkSize * chunkSize; i++) {
         cubePositions.push_back(glm::vec3(i % chunkSize, (i / chunkSize) % chunkSize, (i / (chunkSize * chunkSize)) % chunkSize));
+    }*/
+
+    for (int z = 0; z < chunkSize; z++) {
+        for (int y = 0; y < chunkSize; y++) {
+            for (int x = 0; x < chunkSize; x++) {
+
+                cubePositions.push_back(glm::vec3(x, y, z));
+
+
+            }
+        }
     }
 
 
@@ -368,24 +379,28 @@ int main()
 
 
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        for (unsigned int i = 0; i < chunk.voxels.size(); i++)
-        {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            /*float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));*/
 
-            // retrieve the matrix uniform locations
-            unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
-            unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
 
-            // pass them to the shaders (3 different ways)
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        chunk->createAndRenderMesh(shaderProgram, view);
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        //for (unsigned int i = 0; i < chunkSize * chunkSize * chunkSize; i++) {
+
+            //glm::mat4 model = glm::mat4(1.0f);
+            //model = glm::translate(model, cubePositions[i]);
+            ///*float angle = 20.0f * i;
+            //model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));*/
+
+            //// retrieve the matrix uniform locations
+            //unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
+            //unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
+
+            //// pass them to the shaders (3 different ways)
+            //glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            //glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+
+            //glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        //}
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
