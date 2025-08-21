@@ -6,61 +6,70 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <cstdio>
+#include "constants.h"
 
 
 
 
 namespace voxel_manager
 {
-	unsigned const int chunkSize = 16;
-	enum faceDirection { LEFT, RIGHT, BOTTOM, TOP, BACK, FRONT };
 
-	struct chunk;
+	extern float voxelVertices[6][24];
 
-	struct face
-	{ 
-		faceDirection direction;
-		face() : direction(LEFT) {}
-		face(faceDirection direction);
+	extern unsigned int voxelIndices[6][6];
+
+
+
+	enum voxel_type {
+		AIR,
+		SOLID
 	};
-
 
 	struct voxel
 	{
-		face faces[6];
+		bool type = 0;  // air or voxel   air = 0  solid = 1
 
-		unsigned int type = 0;  // air or voxel
+		bool faces[6] = {0, 0, 0, 0, 0, 0};  // back, front, left, right, bottom, top
+		short visibleFaces = 0;
+
+		short x = 0;
+		short y = 0;
+		short z = 0;
+
+		void makeAndRenderMesh();
+
+
+
+
+		voxel() = default; // <-- default constructor
+		voxel(int voxel_x, int voxel_y, int voxel_z, bool t) : type(t), x(voxel_x), y(voxel_y), z(voxel_z) {}
+
+	};
+
+		
+	struct chunk
+	{
+		voxel voxels[chunkSize][chunkSize][chunkSize];
 		int x = 0;
 		int y = 0;
 		int z = 0;
 
-		voxel() : type(0), x(0), y(0), z(0) {}  // Initialize all members
-		voxel(int x, int y, int z, unsigned int type = 0);
-		void renderMesh();
-		void makeMesh(unsigned int VAO, glm::vec3 cubePosition, unsigned int shaderProgram, glm::mat4 view, voxel_manager::chunk& thisChunk);
+
+		std::vector<float> vertices;
+		std::vector<unsigned int> indices;
+
+		GLuint VBO, VAO, EBO;
+
+		chunk(int x, int y, int z);
+
+		void draw();
 	};
 
 
-
-	struct chunk
-	{
-		voxel voxels[16][16][16];
-		int position = 1;
-
-		
-		void createAndRenderMesh(unsigned int shaderProgram, glm::mat4 view);
-
-		bool isNeighborSolid(int nx, int ny, int nz, const voxel_manager::chunk& chunk);
-
-		//voxel getVoxel(unsigned int x, unsigned int y, unsigned int z);
-
-		unsigned int VBO, VAO, EBO;
+	bool voxel_check_neighbor_type(int nx, int ny, int nz, voxel theseVoxels[chunkSize][chunkSize][chunkSize]);
 
 
-		chunk();
-
-	};
 
 
 }
