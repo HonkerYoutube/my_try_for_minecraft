@@ -6,70 +6,82 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <cstdio>
 #include "constants.h"
-
-
-
 
 namespace voxel_manager
 {
+    extern float voxelVertices[6][24];
+    extern unsigned int voxelIndices[6][6];
 
-	extern float voxelVertices[6][24];
+    enum voxel_type {
+        AIR,
+        SOLID
+    };
 
-	extern unsigned int voxelIndices[6][6];
+    struct voxel
+    {
+        bool type = AIR;
+        bool faces[6] = { 0, 0, 0, 0, 0, 0 };
+        short visibleFaces = 0;
 
+        short x = 0, y = 0, z = 0;
 
+        voxel() = default;
+        voxel(int voxel_x, int voxel_y, int voxel_z, bool t)
+            : type(t), x(voxel_x), y(voxel_y), z(voxel_z) {
+        }
 
-	enum voxel_type {
-		AIR,
-		SOLID
-	};
+        void makeAndRenderMesh();
+        void makeFacesFunc(std::vector<float>* vertices, std::vector<unsigned int>* indices, int f);
+    };
 
-	struct voxel
-	{
-		bool type = 0;  // air or voxel   air = 0  solid = 1
+    struct chunk
+    {
+        voxel voxels[chunkSize][chunkSize][chunkSize];
+        int x = 0, y = 0, z = 0;
 
-		bool faces[6] = {0, 0, 0, 0, 0, 0};  // back, front, left, right, bottom, top
-		short visibleFaces = 0;
+        std::vector<float> vertices;
+        std::vector<unsigned int> indices;
 
-		short x = 0;
-		short y = 0;
-		short z = 0;
+        glm::mat4 model = 1.0f;
 
-		void makeAndRenderMesh();
+        GLuint VBO = 0, VAO = 0, EBO = 0;
 
+        chunk() = default;
+        chunk(int cx, int cy, int cz);
 
+        void draw();
+        void reset_graphics();
+        void make_faces();
+        void generate_voxels();
+    };
 
-
-		voxel() = default; // <-- default constructor
-		voxel(int voxel_x, int voxel_y, int voxel_z, bool t) : type(t), x(voxel_x), y(voxel_y), z(voxel_z) {}
-
-	};
-
-		
-	struct chunk
-	{
-		voxel voxels[chunkSize][chunkSize][chunkSize];
-		int x = 0;
-		int y = 0;
-		int z = 0;
-
-
-		std::vector<float> vertices;
-		std::vector<unsigned int> indices;
-
-		GLuint VBO, VAO, EBO;
-
-		chunk(int x, int y, int z);
-
-		void draw();
-	};
+    struct world
+    {
+        chunk chunks[worldSize][worldSize];
 
 
-	bool voxel_check_neighbor_type(int nx, int ny, int nz, voxel theseVoxels[chunkSize][chunkSize][chunkSize]);
+        void reset_chunk_graphics();
+        void draw();
+        void make_chunks();
 
+    };
+
+
+    bool voxel_check_neighbor_type(int nx, int ny, int nz, voxel theseVoxels[chunkSize][chunkSize][chunkSize], int chunk_x, int chunk_z);
+    chunk* getChunkSafe(int chunkX, int chunkZ);
+    enum faces {
+        BACK,
+        FRONT,
+        LEFT,
+        RIGHT,
+        BOTTOM,
+        TOP
+    };
 
 
 
 }
+
+// Declare the shared pointer
+extern voxel_manager::world* myWorld;

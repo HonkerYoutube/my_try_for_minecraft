@@ -16,6 +16,7 @@
 #include "stb_image.h"
 #include "voxel_manager.h"
 #include "constants.h"
+#include <chrono>
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -62,12 +63,12 @@ bool isSpeedModeActive = false;
 double lastKeyPressTime = 0.0;
 const double cooldownDuration = 0.25; // cooldown in seconds
 const float speedModeMultiplier = 4.0f;
+float cameraSpeed = 0.0f;
 
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
-
 
 
 
@@ -240,46 +241,6 @@ int main() {
 
 
 
-    /*float vertices[] = {
-        // image a cube that you could see all the vertices like you could see through it
-
-        // back
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  // far back side bottom left vertex
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  // far back side bottom right vertex
-         0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  // far back side top right vertex
-        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  // far back side top left vertex
-
-        // front
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  // front side bottom left vertex
-         0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  // front side bottom right vertex
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  // front side top right vertex
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  // front side top left vertex
-
-        // left
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  // left side bottom left vertex
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  // left side bottom right vertex
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  // left side top right vertex
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  // left side top left vertex
-
-        // right
-         0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  // right side bottom left vertex
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  // right side bottom right vertex
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  // right side top right vertex
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  // right side top left vertex
-
-        // botom
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  // bottom side bottom left vertex
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  // bottom side bottom right vertex
-         0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,  // bottom side top right vertex
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,  // bottom side top left vertex
-
-        // top
-        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  // top side bottom left vertex
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  // top side bottom right vertex
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  // top side top right vertex
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  // top side top left vertex
-
-        };*/
 
     float vertices[6][24] = {
         // image a cube that you could see all the vertices like you could see through it
@@ -346,17 +307,20 @@ int main() {
 
 
 
-    std::vector<voxel_manager::voxel> voxels;
 
 
-    voxel_manager::voxel voxel1(0, 0, 0, voxel_manager::SOLID);
-    voxels.push_back(voxel1);
 
-    voxel_manager::voxel voxel2(1, 0, 0, voxel_manager::SOLID);
-    voxels.push_back(voxel2);
+    //voxel_manager::chunk chunk(0, 0, 0);
 
 
-    voxel_manager::chunk chunk(0, 0, 0);
+    myWorld->make_chunks();
+    
+
+    /*for (int x = 0; x < worldSize; x++) {
+        for (int z = 0; z < worldSize; z++) {
+            printf("chunk: %i, %i \n", int(myWorld->chunks[x][z].x), myWorld->chunks[x][z].z);
+        }
+    }*/
 
 
 
@@ -420,18 +384,18 @@ int main() {
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
     glm::mat4 projection;
-    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 10000.0f);
 
 
 
-
-
+    clock_t start = 0, old_start = 0, end = 0;
 
 
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
+        start = clock();
         // per-frame time logic
         // --------------------
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -475,21 +439,31 @@ int main() {
         }
 
 
-        ImGui::Text("player pos: %i, %i, %i", int(cameraPos.x), int(cameraPos.y), int(cameraPos.z));
+        ImGui::Text("player pos: %i, %i, %i  [%i, %i]", int(cameraPos.x), int(cameraPos.y), int(cameraPos.z), int(cameraPos.x / chunkSize), int(cameraPos.z / chunkSize));
 
-        // Display contents in a scrolling region
-        ImGui::TextColored(ImVec4(1, 1, 0, 1), "Important Stuff");
-        ImGui::BeginChild("Scrolling");
-        for (int x = 0; x < chunkSize; x++) {
-            for (int y = 0; y < chunkSize; y++) {
-                for (int z = 0; z < chunkSize; z++) {
+        ImGui::Text("speed: %f", myRound(cameraSpeed, 2));
 
-                    voxel_manager::voxel* voxel = &chunk.voxels[x][y][z];
-                    ImGui::Text("x:%i y:%i z:%i :  back:%i, front:%i, left:%i, right:%i bottom:%i, top:%i", x, y, z, voxel->faces[0], voxel->faces[1], voxel->faces[2], voxel->faces[3], voxel->faces[4], voxel->faces[5]); // back, front, left, right, bottom, top
-                }
-            }
-        }
-        ImGui::EndChild();
+        ImGui::Text("%ld ms", end - old_start);
+
+        /*if (ImGui::Button("reset chunk graphics")) {
+            world.reset_chunk_graphics();
+
+        }*/
+
+
+        //Display contents in a scrolling region
+        //ImGui::BeginChild("Scrolling");
+        //for (int x = 0; x < chunkSize; x++) {
+        //    for (int y = 0; y < chunkSize; y++) {
+        //        for (int z = 0; z < chunkSize; z++) {
+
+        //            voxel_manager::voxel* voxel = &chunk.voxels[x][y][z];
+        //            ImGui::Text("x:%i y:%i z:%i :  back:%i, front:%i, left:%i, right:%i bottom:%i, top:%i", x, y, z, voxel->faces[0], voxel->faces[1], voxel->faces[2], voxel->faces[3], voxel->faces[4], voxel->faces[5]); // back, front, left, right, bottom, top
+        //        }
+        //    }
+        //}
+        //ImGui::EndChild();
+
         ImGui::End();
 
 
@@ -502,7 +476,7 @@ int main() {
 
 
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        glm::mat4 projection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
 
 
         int modelLoc = glGetUniformLocation(shaderProgram, "model");
@@ -520,20 +494,9 @@ int main() {
 
 
 
-        int i = 0;
-        for (int x = 0; x < chunkSize; x++) {
-            for (int y = 0; y < chunkSize; y++) {
-                for (int z = 0; z < chunkSize; z++) {
-                    voxel_manager::voxel voxel = chunk.voxels[x][y][z];
-                    voxel.makeAndRenderMesh();
-                    i++;
-                }
-            }
-        }
-        //printf("voxels: %i, faces: %i \n", i, i*6);
+        
+        myWorld->draw();
 
-
-        //printf("player: x: %f,  y: %f,  z: %f \n", cameraPos.x, cameraPos.y, cameraPos.z);
 
 
 
@@ -553,7 +516,8 @@ int main() {
 
 
 
-
+        end = clock();
+        old_start = start;
         glfwSwapBuffers(window);
     }
 
@@ -586,10 +550,6 @@ int main() {
 
 
 
-/*void setMat4(const std::string& name, const glm::mat4& mat)
-{
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-}*/
 
 
 std::string loadShaderAsString(const std::string& filename) {
@@ -628,6 +588,7 @@ static void processInput(GLFWwindow* window)
             if (isCursorLocked) {
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                 my_tool_active = true;
+                firstMouse = true;  // **RESET firstMouse HERE**
             }
             else {
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -637,12 +598,12 @@ static void processInput(GLFWwindow* window)
     }
 
     double currentTime = glfwGetTime();
-    float cameraSpeed = 2.5f * deltaTime;
+    cameraSpeed = 30.0f * deltaTime;
 
     if (!isSpeedModeActive)
-        cameraSpeed = static_cast<float>(2.5 * deltaTime);
+        cameraSpeed = static_cast<float>(7.5f * deltaTime);
     else
-        cameraSpeed = static_cast<float>(2.5 * deltaTime) * speedModeMultiplier;
+        cameraSpeed = static_cast<float>(7.5f * deltaTime) * speedModeMultiplier;
 
     // Only process camera movement if the cursor is locked
     if (isCursorLocked) {
@@ -664,7 +625,7 @@ static void processInput(GLFWwindow* window)
     {
         isSpeedModeActive = !isSpeedModeActive;
         lastKeyPressTime = currentTime;
-        std::cout << "speed: " << isSpeedModeActive << "\n";
+        //std::cout << "speed: " << isSpeedModeActive << "\n";
     }
 
 
