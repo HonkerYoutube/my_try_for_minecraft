@@ -8,7 +8,8 @@
 
 
 constexpr const int chunkSize = 16;
-constexpr const int worldSize = 10;
+constexpr const int worldSize = 100;
+const int renderDistance = 8;
 
 
 extern unsigned int shaderProgram;

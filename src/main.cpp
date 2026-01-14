@@ -22,6 +22,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "player.h"
+
 
 
 
@@ -45,8 +47,8 @@ int open_ImGui_key = GLFW_KEY_TAB;
 
 
 // camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 32.0f, 0.0f);
+glm::vec3 cameraFront = glm::vec3(2.0f, 0.0f, 0.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
@@ -310,18 +312,13 @@ int main() {
 
 
 
-    //voxel_manager::chunk chunk(0, 0, 0);
 
+
+    //myWorld->make_chunks();
+    //myWorld->update_world_rendering();
 
     myWorld->make_chunks();
     
-
-    /*for (int x = 0; x < worldSize; x++) {
-        for (int z = 0; z < worldSize; z++) {
-            printf("chunk: %i, %i \n", int(myWorld->chunks[x][z].x), myWorld->chunks[x][z].z);
-        }
-    }*/
-
 
 
 
@@ -391,6 +388,11 @@ int main() {
     clock_t start = 0, old_start = 0, end = 0;
 
 
+
+
+
+
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -413,7 +415,7 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+        player_pos = cameraPos;
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -421,7 +423,7 @@ int main() {
         ImGui::NewFrame();
 
 
-        #pragma region ImGui UI
+#pragma region ImGui UI
 
 
         // Create a window called "My First Tool", with a menu bar.
@@ -456,11 +458,18 @@ int main() {
         //for (int x = 0; x < chunkSize; x++) {
         //    for (int y = 0; y < chunkSize; y++) {
         //        for (int z = 0; z < chunkSize; z++) {
-
+        //
         //            voxel_manager::voxel* voxel = &chunk.voxels[x][y][z];
         //            ImGui::Text("x:%i y:%i z:%i :  back:%i, front:%i, left:%i, right:%i bottom:%i, top:%i", x, y, z, voxel->faces[0], voxel->faces[1], voxel->faces[2], voxel->faces[3], voxel->faces[4], voxel->faces[5]); // back, front, left, right, bottom, top
         //        }
         //    }
+        //}
+        //ImGui::EndChild();
+
+        ////Display contents in a scrolling region
+        //ImGui::BeginChild("world");
+        //for (auto& pair : myWorld->loaded_chunks) {
+        //    ImGui::Text("x: %i   z: %i", pair.second->x, pair.second->z);
         //}
         //ImGui::EndChild();
 
@@ -494,7 +503,7 @@ int main() {
 
 
 
-        
+        myWorld->update_world_rendering();
         myWorld->draw();
 
 

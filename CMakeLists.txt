@@ -10,6 +10,7 @@ set(GLFW_ROOT ${CMAKE_SOURCE_DIR}/dependencies/glfw)
 set(STB_IMAGE_ROOT ${CMAKE_SOURCE_DIR}/dependencies/stb_image)
 set(GLM_ROOT ${CMAKE_SOURCE_DIR}/dependencies/glm)
 set(IMGUI_ROOT ${CMAKE_SOURCE_DIR}/dependencies/imgui-docking)
+set(PERLIN_NOISE_ROOT ${CMAKE_SOURCE_DIR}/dependencies/PerlinNoise)
 
 # Add include directories for your dependencies
 include_directories(
@@ -19,6 +20,7 @@ include_directories(
     ${GLM_ROOT}
     ${IMGUI_ROOT}
     ${IMGUI_ROOT}/backends
+    ${PERLIN_NOISE_ROOT}
 )
 
 # IMGUI Sources
@@ -37,6 +39,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/voxel_manager.cpp
     src/constants.cpp
+    src/player.cpp
+    ${PERLIN_NOISE_ROOT}
     ${IMGUI_SOURCES} # Add IMGUI sources here
 )
 

@@ -1,4 +1,0 @@
-
-
-the neighbor checking in the faces is correct, but i'm adding the faces wrong or smth with that
-

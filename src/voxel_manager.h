@@ -7,6 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "constants.h"
+#include "PerlinNoise.hpp"
+#include "player.h"
 
 namespace voxel_manager
 {
@@ -58,12 +60,21 @@ namespace voxel_manager
 
     struct world
     {
-        chunk chunks[worldSize][worldSize];
+        const siv::PerlinNoise::seed_type seed = 123456u;
+        const siv::PerlinNoise perlin{ seed };
+        int size_of_noise_map = worldSize * chunkSize * worldSize * chunkSize;
+        double noise_map[worldSize * chunkSize][worldSize * chunkSize];
 
+        std::unordered_map<std::string, chunk*> loaded_chunks;
 
         void reset_chunk_graphics();
         void draw();
         void make_chunks();
+        bool is_chunk_loaded(int x, int z);
+        std::string makeKey(int x, int z);
+        chunk* generateChunk(int cx, int cz);
+        void update_world_rendering();
+        void generate_noise_map();
 
     };
 

@@ -50,10 +50,29 @@ voxel_manager::chunk::chunk(int cx, int cy, int cz) {
 
 void voxel_manager::chunk::generate_voxels() {
 	// Initialize voxels
-	for (int x = 0; x < chunkSize; ++x)
+	/*for (int x = 0; x < chunkSize; ++x)
 		for (int y = 0; y < chunkSize; ++y)
 			for (int z = 0; z < chunkSize; ++z)
+				voxels[x][y][z] = voxel(x, y, z, SOLID);*/
+
+	/*for (int x = 0; x < chunkSize; ++x)
+		for (int y = 0; y < rand() % chunkSize; ++y)
+			for (int z = 0; z < chunkSize; ++z)
+				voxels[x][y][z] = voxel(x, y, z, SOLID);*/
+
+	for (int x = 0; x < chunkSize; ++x)
+		for (int z = 0; z < chunkSize; ++z)
+			for (int y = 0; y < pow(rand() % chunkSize, 2) / chunkSize; ++y)
 				voxels[x][y][z] = voxel(x, y, z, SOLID);
+
+	/*for (int x = 0; x < chunkSize; ++x) {
+		for (int z = 0; z < chunkSize; ++z) {
+			int noise = myWorld->noise_map[x][z];
+			printf("x: %i, z:%i  noise: %i \n", x, z, noise);
+			for (int y = 0; y < noise; ++y)
+				voxels[x][y][z] = voxel(x, y, z, SOLID);
+		}
+	}*/
 }
 
 void voxel_manager::chunk::make_faces() {
@@ -244,9 +263,20 @@ bool voxel_manager::voxel_check_neighbor_type(int nx, int ny, int nz, voxel thes
 }
 
 voxel_manager::chunk* voxel_manager::getChunkSafe(int chunkX, int chunkZ) {
-	if (chunkX < 0 || chunkX >= worldSize || chunkZ < 0 || chunkZ >= worldSize)
-		return nullptr;
-	return &myWorld->chunks[chunkX][chunkZ];
+	// If chunk coords invalid, return nullptr
+	// (keep the same bounds check you had before)
+	// Note: worldSize still used as logical limit if you want one
+	// but we prefer checking loaded_chunks map.
+
+
+	std::string key = std::to_string(chunkX) + "," + std::to_string(chunkZ);
+
+	auto it = myWorld->loaded_chunks.find(key);
+	if (it != myWorld->loaded_chunks.end()) {
+		return it->second;
+	}
+
+	return nullptr;
 }
 
 
@@ -258,33 +288,155 @@ voxel_manager::chunk* voxel_manager::getChunkSafe(int chunkX, int chunkZ) {
 
 voxel_manager::world* myWorld = new voxel_manager::world;
 
-void voxel_manager::world::make_chunks() {
-	for (int x = 0; x < worldSize; x++)
-		for (int z = 0; z < worldSize; z++) {
-			chunks[x][z] = chunk(x, 0, z);
-		}
-	for (int x = 0; x < worldSize; x++)
-		for (int z = 0; z < worldSize; z++) {
-			chunks[x][z].generate_voxels();
-		}
-	for (int x = 0; x < worldSize; x++)
-		for (int z = 0; z < worldSize; z++) {
-			chunks[x][z].make_faces();
-		}
+void voxel_manager::world::generate_noise_map() {
+
+	int count = 0;
+
+	//for (int z = 0; z < chunkSize; ++z) {
+	//	for (int x = 0; x < chunkSize; ++x) {
+	//		double noise = perlin.octave2D_01((x * 0.1), (z * 0.1), 4) * 10;
+	//		noise_map[x][z] = int(noise);
+	//		//printf("%i \n", int(noise));
+	// 
+	//		count++;
+	//	}
+	//}
+
+	//for (int z = 0; z < chunkSize * worldSize; ++z) {
+	//	for (int x = 0; x < chunkSize * worldSize; ++x) {
+	//		double noise = perlin.octave2D_01((x * 0.005), (z * 0.005), 1) * 10;
+	//		noise_map[x][z] = noise;
+	//		//printf("%i \n", int(noise));
+	// 
+	//		count++;
+	//	}
+	//}
+
+
+
+	//printf("count: %i \n", count);
 }
+
+void voxel_manager::world::make_chunks() {
+	// Generate initial chunks by using generateChunk (which stores into loaded_chunks).
+	// This preserves the function name but avoids using the deleted chunks[][] array.
+	clock_t start = 0, old_start = 0, end = 0;
+	start = clock();
+
+	generate_noise_map();
+
+	//for (int x = 0; x < worldSize; x++) {
+	//	for (int z = 0; z < worldSize; z++) {
+	//		// generateChunk creates the chunk, builds voxels/faces and inserts into loaded_chunks
+	//		// Avoid double-storing or accessing non-existing chunks[][]
+	//		generateChunk(x, z);
+	//	}
+	//}
+
+
+
+
+	end = clock();
+	printf("world ms: %i \n", end - old_start);
+	old_start = start;
+}
+
 
 void voxel_manager::world::reset_chunk_graphics() {
-	for (int x = 0; x < worldSize; x++)
-		for (int z = 0; z < worldSize; z++)
-			chunks[x][z].reset_graphics();
+	for (auto& pair : loaded_chunks) {
+		if (pair.second)
+			pair.second->reset_graphics();
+	}
 }
+
 
 void voxel_manager::world::draw() {
-	for (int x = 0; x < worldSize; x++)
-		for (int z = 0; z < worldSize; z++)
+	/*for (int x = 0; x < worldSize; x++) {
+		for (int z = 0; z < worldSize; z++) {
 			chunks[x][z].draw();
+		}
+	}*/
+
+	for (auto& pair : loaded_chunks) {
+		pair.second->draw();
+		//printf("chunk x:%i y:%i z:%i \n", pair.second->x, pair.second->y, pair.second->z);
+	}
+
 }
 
+
+bool voxel_manager::world::is_chunk_loaded(int x, int z) {
+	return loaded_chunks.find(makeKey(x, z)) != loaded_chunks.end();
+}
+
+
+std::string voxel_manager::world::makeKey(int x, int z) {
+	return std::to_string(x) + "," + std::to_string(z);
+}
+
+
+void voxel_manager::world::update_world_rendering() {
+	// Player's current chunk coordinates
+	int playerChunkX = static_cast<int>(floor(player_pos.x / chunkSize));
+	int playerChunkZ = static_cast<int>(floor(player_pos.z / chunkSize));
+
+	// Generate chunks around player
+	for (int x = playerChunkX - renderDistance; x <= playerChunkX + renderDistance; x++) {
+		for (int z = playerChunkZ - renderDistance; z <= playerChunkZ + renderDistance; z++) {
+			std::string key = makeKey(x, z);
+			if (x >= worldSize || z >= worldSize || x < 0 || z < 0) { continue; }
+			if (loaded_chunks.find(key) == loaded_chunks.end()) {
+				// Generate new chunk and store in map
+				loaded_chunks[key] = generateChunk(x, z);
+			}
+		}
+	}
+
+	// Delete chunks too far from player
+	for (auto& it = loaded_chunks.begin(); it != loaded_chunks.end(); ) {
+		std::string key = it->first;
+
+		// Parse coordinates from string key "x,z"
+		int commaPos = key.find(',');
+		int cx = std::stoi(key.substr(0, commaPos));
+		int cz = std::stoi(key.substr(commaPos + 1));
+
+		if (abs(cx - playerChunkX) > renderDistance || abs(cz - playerChunkZ) > renderDistance) {
+			delete it->second;           // free memory
+			it = loaded_chunks.erase(it); // remove from map
+		}
+		else {
+			++it;
+		}
+	}
+
+	// Debug (optional) — print loaded chunks
+	/*
+	std::cout << "Player chunk: " << playerChunkX << "," << playerChunkZ << "\n";
+	for (auto& pair : loaded_chunks)
+		std::cout << "Loaded chunk: " << pair.first << "\n";
+	*/
+
+}
+
+
+voxel_manager::chunk* voxel_manager::world::generateChunk(int cx, int cz) {
+	// Create the chunk
+	chunk* newChunk = new chunk(cx, 0, cz);
+
+	// Generate its voxels
+	newChunk->generate_voxels();
+
+	// Build its faces
+	newChunk->make_faces();
+
+	// Store in loaded_chunks map
+	loaded_chunks[makeKey(cx, cz)] = newChunk;
+
+	assert(newChunk != nullptr);
+
+	return newChunk;
+}
 
 
 
