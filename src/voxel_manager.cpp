@@ -60,19 +60,24 @@ void voxel_manager::chunk::generate_voxels() {
 			for (int z = 0; z < chunkSize; ++z)
 				voxels[x][y][z] = voxel(x, y, z, SOLID);*/
 
-	for (int x = 0; x < chunkSize; ++x)
+	/*for (int x = 0; x < chunkSize; ++x)
 		for (int z = 0; z < chunkSize; ++z)
 			for (int y = 0; y < pow(rand() % chunkSize, 2) / chunkSize; ++y)
-				voxels[x][y][z] = voxel(x, y, z, SOLID);
+				voxels[x][y][z] = voxel(x, y, z, SOLID);*/
 
-	/*for (int x = 0; x < chunkSize; ++x) {
+	for (int x = 0; x < chunkSize; ++x) {
 		for (int z = 0; z < chunkSize; ++z) {
-			int noise = myWorld->noise_map[x][z];
-			printf("x: %i, z:%i  noise: %i \n", x, z, noise);
+
+
+			int globalX = (this->x * chunkSize) + x;
+			int globalZ = (this->z * chunkSize) + z;
+			
+			int noise = myWorld->noise_map[globalX][globalZ];
+			if (this->x == 0) { printf("globalX:%i, y:%i, globalZ:%i \n", globalX, noise, globalZ); }
 			for (int y = 0; y < noise; ++y)
 				voxels[x][y][z] = voxel(x, y, z, SOLID);
 		}
-	}*/
+	}
 }
 
 void voxel_manager::chunk::make_faces() {
@@ -292,29 +297,24 @@ void voxel_manager::world::generate_noise_map() {
 
 	int count = 0;
 
-	//for (int z = 0; z < chunkSize; ++z) {
-	//	for (int x = 0; x < chunkSize; ++x) {
-	//		double noise = perlin.octave2D_01((x * 0.1), (z * 0.1), 4) * 10;
-	//		noise_map[x][z] = int(noise);
-	//		//printf("%i \n", int(noise));
-	// 
-	//		count++;
-	//	}
-	//}
+	for (int z = 0; z < chunkSize * worldSize; ++z) {
+		for (int x = 0; x < chunkSize * worldSize; ++x) {
+			double noise = perlin.octave2D_01((x * 0.1), (z * 0.1), 4) * 5;
 
-	//for (int z = 0; z < chunkSize * worldSize; ++z) {
-	//	for (int x = 0; x < chunkSize * worldSize; ++x) {
-	//		double noise = perlin.octave2D_01((x * 0.005), (z * 0.005), 1) * 10;
-	//		noise_map[x][z] = noise;
-	//		//printf("%i \n", int(noise));
-	// 
-	//		count++;
-	//	}
-	//}
+			/*double base_layer = perlin.octave2D_01((x * 0.005), (z * 0.005), 4) * 12;
+			double detail_layer = perlin.octave2D_01((x * 0.05), (z * 0.05), 2) * 3;
+			double noise = base_layer + detail_layer*/;
 
+			if (noise > chunkSize - 1) noise = chunkSize - 1;
+			if (noise < 0) noise = 0;
 
+			//std::cout << noise << "\n";
+			noise_map[x][z] = noise;
+	 
+			count++;
+		}
+	}
 
-	//printf("count: %i \n", count);
 }
 
 void voxel_manager::world::make_chunks() {
